@@ -4,6 +4,7 @@ const { getAuditLogs } = require('../controllers/auditLogController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
 
-router.get('/', protect, authorize('hr', 'superadmin'), getAuditLogs);
+// Only Superadmin can view system audit logs (restricted from HR)
+router.get('/', protect, authorize('superadmin'), getAuditLogs);
 
 module.exports = router;

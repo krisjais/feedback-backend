@@ -207,7 +207,7 @@ const getStudentParticipation = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Form not found.' });
     }
 
-    // Determine target eligible students
+    // Determine target eligible students (strictly role: 'student' - HR and Admins never included)
     let studentQuery = { role: 'student', $or: [{ accountStatus: 'active' }, { status: 'active' }] };
     if (form.targetAudience === 'department_specific' && form.eligibleDepartments?.length > 0) {
       studentQuery.department = { $in: form.eligibleDepartments.map((d) => d._id) };
@@ -216,9 +216,14 @@ const getStudentParticipation = async (req, res, next) => {
       studentQuery.academicYear = { $in: form.eligibleAcademicYears };
     }
 
-    const totalEligibleStudents = await User.find(studentQuery)
+    const eligibleUsers = await User.find(studentQuery)
       .populate('department', 'name code')
-      .select('name email studentId department academicYear');
+      .select('name email studentId department academicYear role');
+
+    // Strict filter: under no circumstances should HR officers or Admins appear in student participation
+    const totalEligibleStudents = eligibleUsers.filter(
+      (u) => u.role === 'student' && u.role !== 'hr_officer' && u.role !== 'hr' && u.role !== 'super_admin' && u.role !== 'superadmin'
+    );
 
     const receipts = await SubmissionReceipt.find({ form: formId }).select('student receiptCode submittedAt');
     const receiptMap = new Map(receipts.map((r) => [r.student.toString(), r]));
@@ -237,6 +242,7 @@ const getStudentParticipation = async (req, res, next) => {
         studentId: s.studentId,
         name: s.name,
         email: s.email,
+        role: 'student',
         department: s.department?.name || 'N/A',
         academicYear: s.academicYear,
         hasSubmitted: Boolean(receipt),

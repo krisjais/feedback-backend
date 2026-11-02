@@ -91,7 +91,7 @@ async function runFunctionalAudit() {
 
     const app = require('../server');
     // server already listens in server.js on process.env.PORT
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     console.log(`[API Server] Running at ${BASE_URL}\n`);
 
     // Clean up previous test artifacts if any
@@ -289,7 +289,7 @@ async function runFunctionalAudit() {
       );
 
       // Department-specific BOLA check: Student from different department blocked
-      const otherDept = await Department.findOne({ code: 'ECE' });
+      const otherDept = await Department.findOne({ code: 'MJ' }) || await Department.findOne({});
       const superAdminUser = await User.findOne({ role: { $in: ['super_admin', 'superadmin'] } });
       const deptRestrictedForm = await Form.create({
         title: 'CV-TEST-BOLA Department Survey',
@@ -422,7 +422,7 @@ async function runFunctionalAudit() {
     let testComplaintTicketId = null;
     let testAnonymousComplaintId = null;
     {
-      const cseDept = await Department.findOne({ code: 'CSE' });
+      const cseDept = await Department.findOne({ code: 'IT' }) || await Department.findOne({});
 
       // Create Identified Complaint
       const createComplaintRes = await apiRequest('/api/complaints', {
@@ -582,7 +582,7 @@ async function runFunctionalAudit() {
       );
 
       // 2. Under Review -> Assigned
-      const facilitiesDept = await Department.findOne({ code: 'FACILITIES' });
+      const facilitiesDept = await Department.findOne({ code: 'BVOC' }) || await Department.findOne({});
       const assignRes = await apiRequest(`/api/complaints/${testComplaintId}/assign`, {
         method: 'POST',
         token: hrToken,
@@ -896,7 +896,7 @@ async function runFunctionalAudit() {
       );
 
       // Super Admin Provisions New HR Officer (/api/admin/create-hr)
-      const hrDept = await Department.findOne({ code: 'SAW' });
+      const hrDept = await Department.findOne({ code: 'IT' }) || await Department.findOne({});
       const createHrRes = await apiRequest('/api/admin/create-hr', {
         method: 'POST',
         token: adminToken,

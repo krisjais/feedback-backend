@@ -19,6 +19,17 @@ const getSettings = async (req, res, next) => {
       enableEmailNotifications: settingsMap.enableEmailNotifications || false,
       academicYearCurrent: settingsMap.academicYearCurrent || '2026-2027',
       privacyDisclaimer: settingsMap.privacyDisclaimer || 'Anonymous submissions are strictly decoupled from user identity receipts.',
+      hrVisiblePanels: settingsMap.hrVisiblePanels || [
+        'dashboard',
+        'form-builder',
+        'all-forms',
+        'responses',
+        'participation',
+        'complaints',
+        'analytics',
+        'announcements',
+        'departments',
+      ],
     };
 
     res.json({ success: true, settings: responseData });
@@ -30,6 +41,11 @@ const getSettings = async (req, res, next) => {
 const updateSettings = async (req, res, next) => {
   try {
     const updates = req.body;
+
+    // Only Super Admin can change HR visible panels
+    if (updates.hrVisiblePanels && req.user.role !== 'superadmin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Only Super Administrators can manage HR portal permissions.' });
+    }
 
     for (const [key, value] of Object.entries(updates)) {
       await SystemSetting.findOneAndUpdate(
